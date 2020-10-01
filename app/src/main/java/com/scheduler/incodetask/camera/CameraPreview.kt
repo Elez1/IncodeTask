@@ -43,8 +43,8 @@ class CameraPreview(context: Context, private val camera: Camera) : SurfaceView(
         camera.apply {
             try {
                 val params = parameters
-                params.setRotation(90)
-                setDisplayOrientation(90)
+                params.setRotation(0)
+                setDisplayOrientation(0)
                 parameters = params
                 setPreviewDisplay(surfaceHolder)
                 startPreview()
