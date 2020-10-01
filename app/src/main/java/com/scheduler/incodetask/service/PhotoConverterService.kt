@@ -14,8 +14,8 @@ import java.net.URLConnection
 
 class PhotoConverterService {
 
-    fun getBitmapFromUrl(photo: Photo): Observable<Bitmap> = try {
-        Observable.create(ObservableOnSubscribe<Bitmap> {
+    fun getBitmapFromUrl(photo: Photo): Observable<Pair<String, Bitmap>> = try {
+        Observable.create(ObservableOnSubscribe<Pair<String, Bitmap>> {
             val url = URL(photo.picture)
             val conn: URLConnection = url.openConnection()
 //            Log.e( "sdfsdfsdf","orignal url: " + conn.getURL())
@@ -38,7 +38,7 @@ class PhotoConverterService {
                 it.onError(Exception("Image is null"))
                 return@ObservableOnSubscribe
             }
-            it.onNext(bitmap)
+            it.onNext(Pair(splitPath[2], bitmap))
             it.onComplete()
         })
 
@@ -53,12 +53,14 @@ class PhotoConverterService {
                 val url = URL(photo.picture)
                 val conn: URLConnection = url.openConnection()
                 conn.connect()
+                val ins = conn.getInputStream()
                 val redirectedUrl = conn.url
+                ins.close()
                 val splitPath = redirectedUrl.path.split("/")
                 Log.e("sdfsdfsdf", "Photo id: ${splitPath[2]}")
                 photo.replacePictureUrlWithId(splitPath[2])
 
-                val bitmap = BitmapFactory.decodeStream(conn.getInputStream())
+                val bitmap = BitmapFactory.decodeStream(URL(photo.picture).openConnection().getInputStream())
                 if (bitmap != null) {
                     list.add(bitmap)
                 }

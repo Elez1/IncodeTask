@@ -21,8 +21,6 @@ import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.schedulers.Schedulers
 import kotlinx.android.synthetic.main.activity_main.*
-import java.net.URL
-import java.net.URLConnection
 
 class MainActivity : AppCompatActivity(), PhotoAdapter.OnPhotoClickedListener {
 
@@ -69,8 +67,8 @@ class MainActivity : AppCompatActivity(), PhotoAdapter.OnPhotoClickedListener {
 
                 val adapter = recyclerView.adapter as PhotoAdapter
                 scaledBitmap = if (adapter.listOfPhotos.isNotEmpty()) {
-                    val width = adapter.bitmapList[0].width
-                    val height = adapter.bitmapList[0].height
+                    val width = adapter.bitmapList[0].second.width
+                    val height = adapter.bitmapList[0].second.height
                     Bitmap.createScaledBitmap(b, width, height, false)
                 } else {
                     val width = b.width
@@ -81,7 +79,7 @@ class MainActivity : AppCompatActivity(), PhotoAdapter.OnPhotoClickedListener {
                     Bitmap.createScaledBitmap(b, newWidth, newHeight, false)
                 }
 
-                (recyclerView.adapter as PhotoAdapter).addPhoto(scaledBitmap!!)
+                (recyclerView.adapter as PhotoAdapter).addPhoto(0, Pair("0", scaledBitmap!!))
             }
         }
     }
@@ -100,36 +98,31 @@ class MainActivity : AppCompatActivity(), PhotoAdapter.OnPhotoClickedListener {
             addPhotosToAdapter(adapter.listOfPhotos)
             return
         }
-        compositeDisposable.add(photoService.getPhotos()
-            .observeOn(AndroidSchedulers.mainThread())
-            .doOnSubscribe {
-                Log.e("sdfsdfsdf", "Do on subscribe")
-            }.doOnNext {
-                Log.e("sdfsdfsdf", "Do on next")
-            }.subscribeOn(Schedulers.newThread())
-            .subscribe({
-                addPhotosToAdapter(it)
-                for (photo in it) {
-                    Log.e("sdfsdfsdf", photo.toString())
-                }
-                adapter.listOfPhotos = it
-                //hide progress bar
-            }, {
-                throw it
-            })
+        compositeDisposable.add(
+            photoService.getPhotos()
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribeOn(Schedulers.newThread())
+                .subscribe({
+                    addPhotosToAdapter(it)
+                    for (photo in it) {
+                        Log.e("sdfsdfsdf", photo.toString())
+                    }
+                    adapter.listOfPhotos = it
+                    //hide progress bar
+                }, {
+                    throw it
+                })
         )
 
     }
 
     private fun addPhotosToAdapter(mutableList: MutableList<Photo>) {
+        val adapter = recyclerView.adapter as PhotoAdapter
         for (photo in mutableList) {
             compositeDisposable.add(
-                PhotoConverterService().getBitmapFromUrl(photo)
-                    .observeOn(AndroidSchedulers.mainThread())
+                PhotoConverterService().getBitmapFromUrl(photo).observeOn(AndroidSchedulers.mainThread())
                     .subscribeOn(Schedulers.newThread())
                     .subscribe({
-                        // TODO: 10/1/20 Ne moze samo da dodaje
-                        val adapter = recyclerView.adapter as PhotoAdapter
                         adapter.addPhoto(it)
                     }, {
                         throw it
@@ -145,19 +138,5 @@ class MainActivity : AppCompatActivity(), PhotoAdapter.OnPhotoClickedListener {
     }
 
     private fun checkCameraHardware(context: Context) = context.packageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA)
-
-    private fun getPhotoIdFromUrl(urlString: String): String {
-        val url = URL(urlString)
-        val conn: URLConnection = url.openConnection()
-        conn.connect()
-        val redirectedUrl = conn.url
-
-        val splitPath = redirectedUrl.path.split("/")
-        if (splitPath.size >= 2) {
-            return splitPath[2]
-            Log.e("sdfsdfsdf", "Photo id: ${splitPath[2]}")
-        }
-        return ""
-    }
 
 }
