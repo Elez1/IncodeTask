@@ -11,7 +11,6 @@ object RetrofitInstance {
 //    @Singleton
 //    @Provides
     fun provideRetrofit() = Retrofit.Builder().baseUrl(BASE_URL)
-        .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
         .addConverterFactory(GsonConverterFactory.create()).build()
 
     //    @JvmStatic

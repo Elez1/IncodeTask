@@ -1,11 +1,12 @@
 package com.scheduler.incodetask.retrofit
 
+import androidx.lifecycle.LiveData
 import com.scheduler.incodetask.model.Photo
-import io.reactivex.Observable
+import kotlinx.coroutines.Deferred
 import retrofit2.http.GET
 
 interface PhotoService {
 
     @GET(value = "get/cftPFNNHsi")
-    fun getPhotos(): Observable<MutableList<Photo>>
+    suspend fun getPhotos(): MutableList<Photo>
 }

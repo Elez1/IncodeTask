@@ -8,19 +8,18 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.os.Bundle
 import android.os.Handler
-import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.Observer
+import androidx.lifecycle.ViewModelProviders
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.scheduler.incodetask.R
 import com.scheduler.incodetask.adapter.PhotoAdapter
 import com.scheduler.incodetask.model.Photo
-import com.scheduler.incodetask.retrofit.RetrofitInstance
-import com.scheduler.incodetask.service.PhotoConverterService
-import io.reactivex.android.schedulers.AndroidSchedulers
-import io.reactivex.disposables.CompositeDisposable
-import io.reactivex.schedulers.Schedulers
+import com.scheduler.incodetask.model.PhotoWrapper
+import com.scheduler.incodetask.viewmodel.PhotoViewModel
 import kotlinx.android.synthetic.main.activity_main.*
+import kotlinx.coroutines.*
 
 class MainActivity : AppCompatActivity(), PhotoAdapter.OnPhotoClickedListener {
 
@@ -29,9 +28,10 @@ class MainActivity : AppCompatActivity(), PhotoAdapter.OnPhotoClickedListener {
         val PHOTO_KEY = "${Photo::class.java.simpleName}_KEY"
     }
 
-    private val compositeDisposable = CompositeDisposable()
-
     private lateinit var recyclerView: RecyclerView
+
+    private val coroutineJob = Job()
+    private val coroutineScope: CoroutineScope = CoroutineScope(coroutineJob)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -66,9 +66,11 @@ class MainActivity : AppCompatActivity(), PhotoAdapter.OnPhotoClickedListener {
             Handler().post {
 
                 val adapter = recyclerView.adapter as PhotoAdapter
-                scaledBitmap = if (adapter.listOfPhotos.isNotEmpty()) {
-                    val width = adapter.bitmapList[0].second.width
-                    val height = adapter.bitmapList[0].second.height
+                val list = adapter.photoWrapperList
+                scaledBitmap = if (list.isNotEmpty()) {
+
+                    val width = list[0].bitmap!!.width
+                    val height = list[0].bitmap!!.height
                     Bitmap.createScaledBitmap(b, width, height, false)
                 } else {
                     val width = b.width
@@ -79,7 +81,7 @@ class MainActivity : AppCompatActivity(), PhotoAdapter.OnPhotoClickedListener {
                     Bitmap.createScaledBitmap(b, newWidth, newHeight, false)
                 }
 
-                (recyclerView.adapter as PhotoAdapter).addPhoto(0, Pair("0", scaledBitmap!!))
+                adapter.addPhoto(PhotoWrapper.createUserPhoto(scaledBitmap!!, path!!))
             }
         }
     }
@@ -91,52 +93,71 @@ class MainActivity : AppCompatActivity(), PhotoAdapter.OnPhotoClickedListener {
     }
 
     private fun getPhotos() {
-        val retrofit = RetrofitInstance.provideRetrofit()
-        val photoService = RetrofitInstance.providePhotoService(retrofit)
-        val adapter = recyclerView.adapter as PhotoAdapter
-        if (adapter.listOfPhotos.isNotEmpty()) {
-            addPhotosToAdapter(adapter.listOfPhotos)
-            return
-        }
-        compositeDisposable.add(
-            photoService.getPhotos()
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribeOn(Schedulers.newThread())
-                .subscribe({
-                    addPhotosToAdapter(it)
-                    for (photo in it) {
-                        Log.e("sdfsdfsdf", photo.toString())
+        val viewModel = ViewModelProviders.of(this).get(PhotoViewModel::class.java)
+        coroutineScope.launch {
+            withContext(Dispatchers.Main) {
+                viewModel.getPhotos().observe(this@MainActivity, object : Observer<MutableList<PhotoWrapper>> {
+                    override fun onChanged(list: MutableList<PhotoWrapper>?) {
+                        val adapter = recyclerView.adapter as PhotoAdapter
+                        if (list == null || list.isEmpty()) return
+                        adapter.photoWrapperList = list
                     }
-                    adapter.listOfPhotos = it
-                    //hide progress bar
-                }, {
-                    throw it
                 })
-        )
+            }
+        }
+//        val retrofit = RetrofitInstance.provideRetrofit()
+//        val photoService = RetrofitInstance.providePhotoService(retrofit)
+//        val adapter = recyclerView.adapter as PhotoAdapter
+//        if (adapter.listOfPhotos.isNotEmpty()) {
+//            addPhotosToAdapter(adapter.listOfPhotos)
+//            return
+//        }
+//        compositeDisposable.add(
+//            photoService.getPhotos()
+//                .observeOn(AndroidSchedulers.mainThread())
+//                .subscribeOn(Schedulers.newThread())
+//                .subscribe({
+//                    addPhotosToAdapter(it)
+//                    adapter.listOfPhotos = it
+//                    for (photo in it) {
+//                        Log.e("sdfsdfsdf", photo.toString())
+//                    }
+//                    //hide progress bar
+//                }, {
+//                    throw it
+//                })
+//        )
 
     }
 
     private fun addPhotosToAdapter(mutableList: MutableList<Photo>) {
-        val adapter = recyclerView.adapter as PhotoAdapter
-        for (photo in mutableList) {
-            compositeDisposable.add(
-                PhotoConverterService().getBitmapFromUrl(photo).observeOn(AndroidSchedulers.mainThread())
-                    .subscribeOn(Schedulers.newThread())
-                    .subscribe({
-                        adapter.addPhoto(it)
-                    }, {
-                        throw it
-                    })
-            )
-        }
+//        val adapter = recyclerView.adapter as PhotoAdapter
+//        for (photo in mutableList) {
+//            compositeDisposable.add(
+//                PhotoConverterService().getBitmapFromUrl(photo).observeOn(AndroidSchedulers.mainThread())
+//                    .subscribeOn(Schedulers.newThread())
+//                    .subscribe({
+//                        adapter.addPhoto(it)
+//                    }, {
+//                        throw it
+//                    })
+//            )
+//        }
     }
 
-    override fun onPhotoClicked(photo: Photo) {
+    override fun onPhotoClicked(photoWrapper: PhotoWrapper) {
         startActivity(Intent(this, PhotoActivity::class.java).apply {
-            putExtra(PHOTO_KEY, photo)
+            putExtra(PHOTO_KEY, photoWrapper.photo)
         })
     }
 
     private fun checkCameraHardware(context: Context) = context.packageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA)
 
+    override fun onPause() {
+        if (coroutineJob.isActive){
+            coroutineJob.cancel()
+        }
+
+        super.onPause()
+    }
 }

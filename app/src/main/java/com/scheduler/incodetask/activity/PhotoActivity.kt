@@ -1,9 +1,8 @@
 package com.scheduler.incodetask.activity
 
-import android.content.Intent
-import android.net.Uri
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.os.Bundle
-import android.provider.MediaStore
 import androidx.appcompat.app.AppCompatActivity
 import com.scheduler.incodetask.R
 import com.scheduler.incodetask.activity.MainActivity.Companion.PHOTO_KEY
@@ -15,7 +14,7 @@ import io.reactivex.schedulers.Schedulers
 import kotlinx.android.synthetic.main.activity_photo.*
 
 
-class PhotoActivity : AppCompatActivity(){
+class PhotoActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -26,14 +25,28 @@ class PhotoActivity : AppCompatActivity(){
         titleTextView.text = photo.title
         descriptionTextView.text = photo.comment
 
-        CompositeDisposable().add(PhotoConverterService().getBitmapFromUrl(photo)
-            .observeOn(AndroidSchedulers.mainThread())
-            .subscribeOn(Schedulers.newThread())
-            .subscribe({
-                photoImageView.setImageBitmap(it.second)
-            }, {
-                throw it
-            }))
+        if (photo._id == "userPhoto") {
+            val bitmap = BitmapFactory.decodeFile(photo.picture)
+
+            val width = bitmap.width
+            val height = bitmap.height
+            val aspectRatio = 0.5
+            val newHeight = 300
+            val newWidth = (newHeight * aspectRatio).toInt()
+            val scaledBitmap = Bitmap.createScaledBitmap(bitmap, newWidth, newHeight, false)
+
+            photoImageView.setImageBitmap(scaledBitmap)
+        } else {
+            CompositeDisposable().add(PhotoConverterService().getBitmapFromUrl(photo)
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribeOn(Schedulers.newThread())
+                .subscribe({
+                    photoImageView.setImageBitmap(it.second)
+                }, {
+                    throw it
+                })
+            )
+        }
 
         shareButton.setOnClickListener {
 //            val path: String = MediaStore.Images.Media.insertImage(contentResolver, photo, "Design", null)
