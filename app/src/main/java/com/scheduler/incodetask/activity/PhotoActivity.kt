@@ -7,14 +7,15 @@ import androidx.appcompat.app.AppCompatActivity
 import com.scheduler.incodetask.R
 import com.scheduler.incodetask.activity.MainActivity.Companion.PHOTO_KEY
 import com.scheduler.incodetask.model.Photo
-import com.scheduler.incodetask.service.PhotoConverterService
-import io.reactivex.android.schedulers.AndroidSchedulers
-import io.reactivex.disposables.CompositeDisposable
-import io.reactivex.schedulers.Schedulers
+import com.scheduler.incodetask.repository.PhotoRepository
 import kotlinx.android.synthetic.main.activity_photo.*
+import kotlinx.coroutines.*
 
 
 class PhotoActivity : AppCompatActivity() {
+
+    private val coroutineJob = Job()
+    private val coroutineScope = CoroutineScope(coroutineJob)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -37,15 +38,13 @@ class PhotoActivity : AppCompatActivity() {
 
             photoImageView.setImageBitmap(scaledBitmap)
         } else {
-            CompositeDisposable().add(PhotoConverterService().getBitmapFromUrl(photo)
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribeOn(Schedulers.newThread())
-                .subscribe({
-                    photoImageView.setImageBitmap(it.second)
-                }, {
-                    throw it
-                })
-            )
+            coroutineScope.launch {
+                val bitmap = PhotoRepository().getBitmapFromUrlAsync(photo.picture).await()
+
+                withContext(Dispatchers.Main) {
+                    photoImageView.setImageBitmap(bitmap)
+                }
+            }
         }
 
         shareButton.setOnClickListener {
@@ -60,5 +59,13 @@ class PhotoActivity : AppCompatActivity() {
 //            share.putExtra(Intent.EXTRA_TEXT, "I found something cool!")
 //            startActivity(Intent.createChooser(share, "Share Your Design!"))
         }
+    }
+
+    override fun onPause() {
+        if (coroutineJob.isActive) {
+            coroutineJob.cancel()
+        }
+
+        super.onPause()
     }
 }

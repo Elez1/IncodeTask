@@ -1,61 +1,87 @@
 package com.scheduler.incodetask.viewmodel
 
-import android.graphics.BitmapFactory
 import android.util.Log
-import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.ViewModel
 import com.scheduler.incodetask.model.Photo
 import com.scheduler.incodetask.model.PhotoWrapper
-import com.scheduler.incodetask.retrofit.RetrofitInstance
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
-import java.io.InputStream
-import java.net.URL
-import java.net.URLConnection
+import com.scheduler.incodetask.repository.PhotoRepository
+import kotlinx.coroutines.*
+import java.lang.Exception
+import java.util.concurrent.ConcurrentLinkedQueue
 
-class PhotoViewModel() : ViewModel() {
+class PhotoViewModel(private val photoListener: PhotoListener) {
 
-    val retrofit = RetrofitInstance.provideRetrofit()
-    val photoService = RetrofitInstance.providePhotoService(retrofit)
+    private val repository = PhotoRepository()
 
-    var photoWrapperList = MutableLiveData<MutableList<PhotoWrapper>>()
+    var photoWrapperList = mutableListOf<PhotoWrapper>()
 
-    suspend fun getPhotos(): MutableLiveData<MutableList<PhotoWrapper>> {
-        withContext(Dispatchers.IO) {
-            val photos = photoService.getPhotos()
-            val photoWrappers = mutableListOf<PhotoWrapper>()
-            for (photo in photos) {
-                val photoWrapper = getBitmapAndId(photo)
-                photoWrappers.add(photoWrapper!!)
-            }
-            withContext(Dispatchers.Main) {
-                photoWrapperList.value = photoWrappers
-            }
+    suspend fun getPhotos(): MutableList<PhotoWrapper> {
+        val job = GlobalScope.launch(Dispatchers.IO) {
+            val photos = repository.getPhotos()
+            fillPhotoWrapperList(photos)
+            sortList(photos, photoWrapperList)
+
+//            for (photo in photos) {
+//                val photoWrapper = getBitmapAndId(photo)
+//                withContext(Dispatchers.Main) {
+//                    Log.e("sdfsdfsdf", "Adding photo to the list")
+//                    photoWrapperList.add(photoWrapper!!)
+//                    photoListener.onPhotosReady(photoWrapper)
+//                }
+//            }
+
         }
-
+        job.join()
         return photoWrapperList
     }
 
-    private fun getBitmapAndId(photo: Photo): PhotoWrapper? {
-        val url = URL(photo.picture)
-        val conn: URLConnection = url.openConnection()
-        conn.connect()
-        val inputS: InputStream = conn.getInputStream()
-        val redirectedUrl = conn.url
-        Log.e("sdfsdfsdf", "redirected url:  $redirectedUrl")
-        inputS.close()
+    private fun sortList(photos: MutableList<Photo>, photoWrapperList: MutableList<PhotoWrapper>) {
+        val sortedList = mutableListOf<PhotoWrapper>()
 
-        val splitPath = redirectedUrl.path.split("/")
-        val photoId = splitPath[2]
-        photo.replacePictureUrlWithId(photoId)
-        // TODO: 10/1/20 ovde negde je greska
+        for (photo in photos){
+            val wrapper = getPhotoWrapperForPhoto(photo, photoWrapperList)
+            sortedList.add(wrapper)
+        }
 
-        val bitmap = BitmapFactory.decodeStream(URL(photo.picture).openConnection().getInputStream()) ?: throw Exception("Bitmap can't be null")
-        return PhotoWrapper(photoId, photo, bitmap)
+        for(pw in sortedList){
+            Log.e("sdfsdfsdf", pw.toString())
+        }
+        this.photoWrapperList = sortedList
+    }
+
+    private fun getPhotoWrapperForPhoto(photo: Photo, list: MutableList<PhotoWrapper>): PhotoWrapper {
+        for (pw in list){
+            if (pw.photo == photo){
+                return pw
+            }
+        }
+        throw Exception("Wrapper not found!")
+    }
+
+    private suspend fun getBitmapAndId(photo: Photo): PhotoWrapper {
+        return createPhotoWrapper(photo)
+    }
+
+    private suspend fun fillPhotoWrapperList(mutableList: MutableList<Photo>) = withContext(Dispatchers.IO) {
+        val jobList = ConcurrentLinkedQueue<Job>()
+        for (photo in mutableList) {
+            jobList.add(GlobalScope.launch {
+                val pw = createPhotoWrapper(photo)
+                pw.photo.replacePictureUrlWithId(pw.id)
+                photoWrapperList.add(pw)
+//                photoListener.onPhotosReady(pw)
+            })
+        }
+
+        jobList.joinAll()
+    }
+
+    private suspend fun createPhotoWrapper(photo: Photo): PhotoWrapper {
+        val photoId = repository.getPhotoIdAndBitmapPair(photo.picture).await()
+        return PhotoWrapper(photoId.first, photo, photoId.second)
     }
 
     interface PhotoListener {
-        fun onPhotosReady(photoWrapperList: MutableList<PhotoWrapper>)
+        fun onPhotosReady(photoWrapper: PhotoWrapper)
     }
 
 }

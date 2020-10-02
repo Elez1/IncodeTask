@@ -1,6 +1,7 @@
 package com.scheduler.incodetask.adapter
 
 import android.net.Uri
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -8,9 +9,10 @@ import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.scheduler.incodetask.R
 import com.scheduler.incodetask.model.PhotoWrapper
+import com.scheduler.incodetask.viewmodel.PhotoViewModel
 import kotlinx.android.synthetic.main.photo_list_item.view.*
 
-class PhotoAdapter(private val photoClickedListener: OnPhotoClickedListener) : RecyclerView.Adapter<PhotoAdapter.PhotoViewHolder>() {
+class PhotoAdapter(private val photoClickedListener: OnPhotoClickedListener, private val viewModel: PhotoViewModel) : RecyclerView.Adapter<PhotoAdapter.PhotoViewHolder>() {
 
 //    var bitmapList = mutableListOf<Pair<String, Bitmap>>()
 //        set(value) {
@@ -35,16 +37,11 @@ class PhotoAdapter(private val photoClickedListener: OnPhotoClickedListener) : R
 
     override fun onBindViewHolder(holder: PhotoViewHolder, position: Int) {
         val listItemView = holder.itemView
-//        val bitmapPair = bitmapList[position]
-//        val photo = listOfPhotos[position]
 
         val photo = photoWrapperList[position].photo
-        val bitmap = photoWrapperList[position].bitmap
-
-//        Glide.with(listItemView.context).load(Uri.parse(photo.picture)).into(listItemView.photoImageView)
 
         listItemView.photoTitleTextView.text = photo.title
-        listItemView.photoImageView.setImageBitmap(bitmap)
+        listItemView.photoImageView.setImageBitmap(photoWrapperList[position].bitmap)
 
         listItemView.setOnClickListener {
             photoClickedListener.onPhotoClicked(photoWrapperList[position])
@@ -52,34 +49,14 @@ class PhotoAdapter(private val photoClickedListener: OnPhotoClickedListener) : R
     }
 
     fun addPhoto(photo: PhotoWrapper) {
-        photoWrapperList.add(0, photo)
+        photoWrapperList.add(photo)
         notifyDataSetChanged()
     }
 
-//    fun addPhoto(index: Int, pair: Pair<String, Bitmap>) {
-//        if (photoAlreadyExists(pair)) {
-//            return
-//        }
-//        bitmapList.add(index, pair)
-//        notifyDataSetChanged()
-//    }
-//
-//    fun addPhoto(pair: Pair<String, Bitmap>) {
-//        if (photoAlreadyExists(pair)) {
-//            return
-//        }
-//        bitmapList.add(pair)
-//        notifyDataSetChanged()
-//    }
-//
-//    private fun photoAlreadyExists(pair: Pair<String, Bitmap>): Boolean {
-//        for (p in bitmapList) {
-//            if (p.first == pair.first && p.second == pair.second) {
-//                return true
-//            }
-//        }
-//        return false
-//    }
+    fun addPhoto(index: Int = 0, photo: PhotoWrapper) {
+        photoWrapperList.add(index, photo)
+        notifyDataSetChanged()
+    }
 
     inner class PhotoViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView)
 

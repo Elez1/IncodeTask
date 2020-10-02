@@ -7,7 +7,7 @@ import java.net.URL
 data class Photo(var _id: String, var title: String, var comment: String, var publishedAt: String, var picture: String) : Serializable{
     fun replacePictureUrlWithId(id:String){
         picture = "https://unsplash.it/id/$id/600/300/"
-        Log.e("sdfsdfsdf", "Setting new url: $picture")
+//        Log.e("sdfsdfsdf", "Setting new url: $picture")
     }
 
     fun getPhotoId(): String {

@@ -8,9 +8,8 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.os.Bundle
 import android.os.Handler
+import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
-import androidx.lifecycle.Observer
-import androidx.lifecycle.ViewModelProviders
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.scheduler.incodetask.R
@@ -21,7 +20,7 @@ import com.scheduler.incodetask.viewmodel.PhotoViewModel
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.coroutines.*
 
-class MainActivity : AppCompatActivity(), PhotoAdapter.OnPhotoClickedListener {
+class MainActivity : AppCompatActivity(), PhotoAdapter.OnPhotoClickedListener, PhotoViewModel.PhotoListener {
 
     companion object {
         private val TAG = MainActivity::class.java.simpleName
@@ -29,6 +28,7 @@ class MainActivity : AppCompatActivity(), PhotoAdapter.OnPhotoClickedListener {
     }
 
     private lateinit var recyclerView: RecyclerView
+    private lateinit var viewModel: PhotoViewModel
 
     private val coroutineJob = Job()
     private val coroutineScope: CoroutineScope = CoroutineScope(coroutineJob)
@@ -37,9 +37,11 @@ class MainActivity : AppCompatActivity(), PhotoAdapter.OnPhotoClickedListener {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
+        viewModel = PhotoViewModel(this)
+
         recyclerView = photosRecyclerView.apply {
             layoutManager = LinearLayoutManager(this@MainActivity)
-            adapter = PhotoAdapter(this@MainActivity)
+            adapter = PhotoAdapter(this@MainActivity, viewModel)
         }
 
         takePhotoButton.setOnClickListener {
@@ -81,7 +83,7 @@ class MainActivity : AppCompatActivity(), PhotoAdapter.OnPhotoClickedListener {
                     Bitmap.createScaledBitmap(b, newWidth, newHeight, false)
                 }
 
-                adapter.addPhoto(PhotoWrapper.createUserPhoto(scaledBitmap!!, path!!))
+                adapter.addPhoto(0, PhotoWrapper.createUserPhoto(scaledBitmap!!, path!!))
             }
         }
     }
@@ -89,22 +91,35 @@ class MainActivity : AppCompatActivity(), PhotoAdapter.OnPhotoClickedListener {
     override fun onResume() {
         super.onResume()
 
-        getPhotos()
+        getPhotos1()
+    }
+
+    private fun getPhotos1() {
+        coroutineScope.launch {
+            val list = viewModel.getPhotos()
+            withContext(Dispatchers.Main) {
+                for (pw in list) {
+                    Log.e("sdfsdfsdf", "On resume listItem: $pw")
+                    (recyclerView.adapter as PhotoAdapter).addPhoto(pw)
+                }
+            }
+        }
     }
 
     private fun getPhotos() {
-        val viewModel = ViewModelProviders.of(this).get(PhotoViewModel::class.java)
-        coroutineScope.launch {
-            withContext(Dispatchers.Main) {
-                viewModel.getPhotos().observe(this@MainActivity, object : Observer<MutableList<PhotoWrapper>> {
-                    override fun onChanged(list: MutableList<PhotoWrapper>?) {
-                        val adapter = recyclerView.adapter as PhotoAdapter
-                        if (list == null || list.isEmpty()) return
-                        adapter.photoWrapperList = list
-                    }
-                })
-            }
-        }
+//        coroutineScope.launch {
+//            withContext(Dispatchers.Main) {
+//                viewModel.getPhotos().observe(this@MainActivity, object : Observer<MutableList<PhotoWrapper>> {
+//                    override fun onChanged(list: MutableList<PhotoWrapper>) {
+//                        Log.e("sdfsdfsdf", "Entered on changed")
+//                        val adapter = recyclerView.adapter as PhotoAdapter
+////                        adapter.photoWrapperList.add(list[list.size-1])
+//                        adapter.photoWrapperList = list
+//                    }
+//                })
+//
+//            }
+//        }
 //        val retrofit = RetrofitInstance.provideRetrofit()
 //        val photoService = RetrofitInstance.providePhotoService(retrofit)
 //        val adapter = recyclerView.adapter as PhotoAdapter
@@ -154,10 +169,16 @@ class MainActivity : AppCompatActivity(), PhotoAdapter.OnPhotoClickedListener {
     private fun checkCameraHardware(context: Context) = context.packageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA)
 
     override fun onPause() {
-        if (coroutineJob.isActive){
+        if (coroutineJob.isActive) {
             coroutineJob.cancel()
         }
 
         super.onPause()
+    }
+
+    override fun onPhotosReady(photoWrapper: PhotoWrapper) {
+        coroutineScope.launch(Dispatchers.Main) {
+            (recyclerView.adapter as PhotoAdapter).addPhoto(photoWrapper)
+        }
     }
 }
