@@ -15,7 +15,7 @@ class PhotoHandler(private val photoListener: PhotoListener) {
     suspend fun getPhotos(): MutableList<PhotoWrapper> {
         val job = GlobalScope.launch(Dispatchers.IO) {
             val photos = repository.getPhotos()
-            fillPhotoWrapperList(photos)
+            fillPhotoWrapperList(photos).joinAll()
             sortList(photos, photoWrapperList)
         }
         job.join()
@@ -54,7 +54,7 @@ class PhotoHandler(private val photoListener: PhotoListener) {
             })
         }
 
-        jobList.joinAll()
+        jobList
     }
 
     private suspend fun createPhotoWrapper(photo: Photo): PhotoWrapper {

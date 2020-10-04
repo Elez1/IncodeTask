@@ -1,7 +1,6 @@
 package com.scheduler.incodetask.repository
 
 import android.graphics.BitmapFactory
-import android.util.Log
 import com.scheduler.incodetask.retrofit.RetrofitInstance
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
@@ -28,12 +27,10 @@ class PhotoRepository {
         conn.connect()
         val inputS: InputStream = conn.getInputStream()
         val redirectedUrl = conn.url
-//        Log.e("sdfsdfsdf", "redirected url:  $redirectedUrl")
 
         val splitPath = redirectedUrl.path.split("/")
         val bitmap = BitmapFactory.decodeStream(inputS)
         inputS.close()
         Pair(splitPath[2], bitmap)
-//        splitPath[2]
     }
 }
