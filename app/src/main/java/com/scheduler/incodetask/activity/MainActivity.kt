@@ -6,6 +6,7 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
 import android.util.Log
+import androidx.appcompat.app.AlertDialog
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.scheduler.incodetask.R
@@ -13,50 +14,54 @@ import com.scheduler.incodetask.adapter.PhotoAdapter
 import com.scheduler.incodetask.model.Photo
 import com.scheduler.incodetask.model.PhotoWrapper
 import com.scheduler.incodetask.service.BitmapService
-import com.scheduler.incodetask.viewmodel.PhotoViewModel
+import com.scheduler.incodetask.handler.PhotoHandler
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.coroutines.*
 
 
-// TODO: 10/2/20 Spinner; Layout do dugmeta za slikanje; Camera preview; Photo size
-
-class MainActivity : BaseActivity(), PhotoAdapter.OnPhotoClickedListener, PhotoViewModel.PhotoListener {
+class MainActivity : BaseActivity(), PhotoAdapter.OnPhotoClickedListener, PhotoHandler.PhotoListener {
 
     companion object {
-        private val TAG = MainActivity::class.java.simpleName
         val PHOTO_KEY = "${Photo::class.java.simpleName}_KEY"
+        val PHOTO_PATH_KEY = "${Photo::class.java.simpleName}_PATH_KEY"
     }
 
+    private val TAG = MainActivity::class.java.simpleName
+    private val TAKE_PHOTO_REQUEST_CODE = 9001
+
     private lateinit var recyclerView: RecyclerView
-    private lateinit var viewModel: PhotoViewModel
+    private lateinit var handler: PhotoHandler
+
+    private val bitmapService = BitmapService()
 
     private val coroutineJob = Job()
     private val coroutineScope: CoroutineScope = CoroutineScope(coroutineJob)
-
-    private val bitmapService = BitmapService()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        viewModel = PhotoViewModel(this)
+        handler = PhotoHandler(this)
 
         recyclerView = photosRecyclerView.apply {
             layoutManager = LinearLayoutManager(this@MainActivity)
-            adapter = PhotoAdapter(this@MainActivity, viewModel)
+            adapter = PhotoAdapter(this@MainActivity)
         }
 
         takePhotoButton.setOnClickListener {
-            startActivityForResult(Intent(this, CameraActivity::class.java), 9001)
+            if (cameraExists(this)) {
+                startActivityForResult(Intent(this, CameraActivity::class.java), TAKE_PHOTO_REQUEST_CODE)
+            } else {
+                showInfoDialog()
+            }
         }
-
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
 
-        if (requestCode == 9001 && resultCode == Activity.RESULT_OK) {
-            val path = data?.getStringExtra("sdfsdfsdf")
+        if (requestCode == TAKE_PHOTO_REQUEST_CODE && resultCode == Activity.RESULT_OK) {
+            val path = data?.getStringExtra(PHOTO_PATH_KEY)
 
             coroutineScope.launch {
                 bitmapService.getBitmapFromPath(path!!) {
@@ -79,10 +84,10 @@ class MainActivity : BaseActivity(), PhotoAdapter.OnPhotoClickedListener, PhotoV
             return@launch
         }
         showSpinner()
-        val photoWrapperList = viewModel.getPhotos()
+        val photoWrapperList = handler.getPhotos()
         withContext(Dispatchers.Main) {
             for (photoWrapper in photoWrapperList) {
-                Log.e("sdfsdfsdf", "On resume listItem: $photoWrapper")
+                Log.d(TAG, "On resume listItem: $photoWrapper")
                 adapter.addPhoto(photoWrapper)
             }
             hideSpinner()
@@ -95,20 +100,21 @@ class MainActivity : BaseActivity(), PhotoAdapter.OnPhotoClickedListener, PhotoV
         })
     }
 
-    // TODO: 10/4/20 delete
+    // used for adding photos one by one
+    // currently not used, but left as an option
     override fun onPhotosReady(photoWrapper: PhotoWrapper) {
         coroutineScope.launch(Dispatchers.Main) {
             (recyclerView.adapter as PhotoAdapter).addPhoto(photoWrapper)
         }
     }
 
-    private fun checkCameraHardware(context: Context) = context.packageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA)
+    private fun cameraExists(context: Context) = context.packageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA)
 
-//    override fun onStop() {
-//        if (coroutineJob.isActive) {
-//            coroutineJob.cancel()
-//        }
-//
-//        super.onStop()
-//    }
+    private fun showInfoDialog() {
+        AlertDialog.Builder(this)
+            .setTitle("This device doesn't have a camera")
+            .setPositiveButton(android.R.string.yes, null)
+            .setIcon(android.R.drawable.ic_dialog_alert)
+            .show()
+    }
 }

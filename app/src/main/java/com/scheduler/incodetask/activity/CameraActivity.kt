@@ -84,7 +84,6 @@ class CameraActivity : BaseActivity() {
     }
 
     private fun startCamera() {
-        Log.e("sdfsdfsdf", "starting camera")
         camera = getCameraInstance()
         cameraPreview = CameraPreview(this, camera!!)
         cameraPreview.also {
@@ -104,17 +103,15 @@ class CameraActivity : BaseActivity() {
         val pictureFile = fileService.getOutputMediaFile().also { Log.d(TAG, it.toString()) } ?: return@launch
         val resized = bitmapService.resize(bitmap, 1000, 1000)
         val byteArray = resized!!.toBytes()
-        Log.e("sdfsdfsdf", "Created byte array")
 
         fileService.saveBitmap(byteArray, pictureFile)
         hideSpinner()
-        setResult(Activity.RESULT_OK, Intent().apply { putExtra("sdfsdfsdf", pictureFile.absolutePath) })
+        setResult(Activity.RESULT_OK, Intent().apply { putExtra(MainActivity.PHOTO_PATH_KEY, pictureFile.absolutePath) })
         finish()
     }
 
 
     private fun getCameraInstance(): Camera? {
-        Log.e("sdfsdfsdf", "Getting camera instance")
         return try {
             Camera.open()
         } catch (e: Exception) {

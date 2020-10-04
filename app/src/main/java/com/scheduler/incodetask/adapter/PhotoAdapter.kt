@@ -6,10 +6,9 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.scheduler.incodetask.R
 import com.scheduler.incodetask.model.PhotoWrapper
-import com.scheduler.incodetask.viewmodel.PhotoViewModel
 import kotlinx.android.synthetic.main.photo_list_item.view.*
 
-class PhotoAdapter(private val photoClickedListener: OnPhotoClickedListener, private val viewModel: PhotoViewModel) : RecyclerView.Adapter<PhotoAdapter.PhotoViewHolder>() {
+class PhotoAdapter(private val photoClickedListener: OnPhotoClickedListener) : RecyclerView.Adapter<PhotoAdapter.PhotoViewHolder>() {
 
     var photoWrapperList = mutableListOf<PhotoWrapper>()
         set(value) {

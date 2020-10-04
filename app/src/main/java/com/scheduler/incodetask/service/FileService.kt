@@ -38,7 +38,6 @@ class FileService {
         try {
             val fos = FileOutputStream(file)
             fos.write(byteArray)
-            Log.e("sdfsdfsdf", "Finished writing closing stream")
             fos.close()
         } catch (e: FileNotFoundException) {
             Log.d("TAG", "File not found: ${e.message}")

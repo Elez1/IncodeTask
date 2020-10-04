@@ -60,6 +60,7 @@ class PhotoActivity : BaseActivity() {
             intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
             intent.type = "image/png"
             startActivity(intent)
+            fileService.deleteFile(File(uri.path!!))
         }
     }
 

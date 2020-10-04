@@ -1,14 +1,12 @@
-package com.scheduler.incodetask.viewmodel
+package com.scheduler.incodetask.handler
 
-import android.util.Log
 import com.scheduler.incodetask.model.Photo
 import com.scheduler.incodetask.model.PhotoWrapper
 import com.scheduler.incodetask.repository.PhotoRepository
 import kotlinx.coroutines.*
-import java.lang.Exception
 import java.util.concurrent.ConcurrentLinkedQueue
 
-class PhotoViewModel(private val photoListener: PhotoListener) {
+class PhotoHandler(private val photoListener: PhotoListener) {
 
     private val repository = PhotoRepository()
 
@@ -19,16 +17,6 @@ class PhotoViewModel(private val photoListener: PhotoListener) {
             val photos = repository.getPhotos()
             fillPhotoWrapperList(photos)
             sortList(photos, photoWrapperList)
-
-//            for (photo in photos) {
-//                val photoWrapper = getBitmapAndId(photo)
-//                withContext(Dispatchers.Main) {
-//                    Log.e("sdfsdfsdf", "Adding photo to the list")
-//                    photoWrapperList.add(photoWrapper!!)
-//                    photoListener.onPhotosReady(photoWrapper)
-//                }
-//            }
-
         }
         job.join()
         return photoWrapperList
@@ -37,28 +25,21 @@ class PhotoViewModel(private val photoListener: PhotoListener) {
     private fun sortList(photos: MutableList<Photo>, photoWrapperList: MutableList<PhotoWrapper>) {
         val sortedList = mutableListOf<PhotoWrapper>()
 
-        for (photo in photos){
+        for (photo in photos) {
             val wrapper = getPhotoWrapperForPhoto(photo, photoWrapperList)
             sortedList.add(wrapper)
         }
 
-        for(pw in sortedList){
-            Log.e("sdfsdfsdf", pw.toString())
-        }
         this.photoWrapperList = sortedList
     }
 
     private fun getPhotoWrapperForPhoto(photo: Photo, list: MutableList<PhotoWrapper>): PhotoWrapper {
-        for (pw in list){
-            if (pw.photo == photo){
+        for (pw in list) {
+            if (pw.photo == photo) {
                 return pw
             }
         }
         throw Exception("Wrapper not found!")
-    }
-
-    private suspend fun getBitmapAndId(photo: Photo): PhotoWrapper {
-        return createPhotoWrapper(photo)
     }
 
     private suspend fun fillPhotoWrapperList(mutableList: MutableList<Photo>) = withContext(Dispatchers.IO) {
@@ -68,7 +49,8 @@ class PhotoViewModel(private val photoListener: PhotoListener) {
                 val photoWrapper = createPhotoWrapper(photo)
                 photoWrapper.photo.replacePictureUrlWithId(photoWrapper.id)
                 photoWrapperList.add(photoWrapper)
-//                photoListener.onPhotosReady(pw)
+//                uncomment this to add one by one
+//                photoListener.onPhotosReady(photoWrapper)
             })
         }
 
