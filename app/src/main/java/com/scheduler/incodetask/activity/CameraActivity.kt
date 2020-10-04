@@ -27,7 +27,7 @@ import java.io.*
 import java.text.SimpleDateFormat
 import java.util.*
 
-class CameraActivity : AppCompatActivity() {
+class CameraActivity : BaseActivity() {
     private val STORAGE_PERMISSION_REQUEST_CODE = 9003
     private val CAMERA_PERMISSION_REQUEST_CODE = 9002
 
@@ -83,6 +83,7 @@ class CameraActivity : AppCompatActivity() {
         }
 
         captureButton.setOnClickListener {
+            showSpinner()
             camera!!.takePicture(null, null, Camera.PictureCallback { photoBytes, _ ->
 
                 val bitmap = BitmapFactory.decodeByteArray(photoBytes, 0, photoBytes.size)
@@ -139,6 +140,7 @@ class CameraActivity : AppCompatActivity() {
                 fos.write(byteArray)
                 Log.e("sdfsdfsdf", "Finished writing closing stream")
                 fos.close()
+                hideSpinner()
                 setResult(Activity.RESULT_OK, Intent().apply { putExtra("sdfsdfsdf", pictureFile.absolutePath) })
                 finish()
             } catch (e: FileNotFoundException) {

@@ -51,6 +51,6 @@ class PhotoAdapter(private val photoClickedListener: OnPhotoClickedListener, pri
     inner class PhotoViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView)
 
     interface OnPhotoClickedListener {
-        fun onPhotoClicked(photo: PhotoWrapper)
+        fun onPhotoClicked(photoWrapper: PhotoWrapper)
     }
 }

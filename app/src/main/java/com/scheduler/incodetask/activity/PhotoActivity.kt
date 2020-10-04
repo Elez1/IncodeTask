@@ -3,7 +3,6 @@ package com.scheduler.incodetask.activity
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.os.Bundle
-import androidx.appcompat.app.AppCompatActivity
 import com.scheduler.incodetask.R
 import com.scheduler.incodetask.activity.MainActivity.Companion.PHOTO_KEY
 import com.scheduler.incodetask.model.Photo
@@ -13,7 +12,7 @@ import kotlinx.android.synthetic.main.activity_photo.*
 import kotlinx.coroutines.*
 
 
-class PhotoActivity : AppCompatActivity() {
+class PhotoActivity : BaseActivity() {
 
     private val coroutineJob = Job()
     private val coroutineScope = CoroutineScope(coroutineJob)
@@ -27,15 +26,16 @@ class PhotoActivity : AppCompatActivity() {
         titleTextView.text = photo.title
         descriptionTextView.text = photo.comment
 
+        showSpinner()
         coroutineScope.launch {
-            if (photo._id == "userPhoto") {
+            val bitmap = if (photo._id == "userPhoto") {
                 val bitmap = BitmapFactory.decodeFile(photo.picture)
-                val compressed = BitmapService().resize(bitmap, 1000, 1000) ?: throw Exception("Compressed photo can't be null")
-                setBitmap(compressed)
+                BitmapService().resize(bitmap, 1000, 1000) ?: throw Exception("Compressed photo can't be null")
             } else {
-                val bitmap = PhotoRepository().getBitmapFromUrlAsync(photo.picture).await()
-                setBitmap(bitmap)
+                PhotoRepository().getBitmapFromUrlAsync(photo.picture).await()
             }
+            setBitmap(bitmap)
+            hideSpinner()
         }
 
         shareButton.setOnClickListener {
