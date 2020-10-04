@@ -87,48 +87,12 @@ class CameraActivity : BaseActivity() {
             camera!!.takePicture(null, null, Camera.PictureCallback { photoBytes, _ ->
 
                 val bitmap = BitmapFactory.decodeByteArray(photoBytes, 0, photoBytes.size)
-//                val stream = ByteArrayOutputStream()
-//
-//                bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream)
-//                val byteArray = stream.toByteArray()
-//                checkAndRequestPermission()
-
                 savePhotoAndFinish(bitmap)
             })
         }
     }
 
     private fun savePhotoAndFinish(bitmap: Bitmap) {
-//        var stream: OutputStream? = null
-//        var path = ""
-//        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-//            val resolver = contentResolver
-//            val contentValues = ContentValues()
-//            contentValues.put(MediaStore.MediaColumns.DISPLAY_NAME, "imageBitmap.png");
-//            contentValues.put(MediaStore.MediaColumns.MIME_TYPE, "image/png")
-//            contentValues.put(MediaStore.Images.Media.RELATIVE_PATH, Environment.DIRECTORY_PICTURES)
-//            val imageUri = resolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues)
-//            path = imageUri!!.path!!
-//            stream = resolver.openOutputStream(imageUri)
-//
-//            path = Environment.DIRECTORY_PICTURES+"/imageBitmap.png"
-//
-//            Log.e("sfsdsdf", "Path ${imageUri.path}")
-//            Log.e("sfsdsdf", "Path $imageUri")
-//
-//
-//
-//        } else {
-//            val file = File(Environment.getExternalStorageDirectory().toString() + "imageBitmap" + ".png")
-//            stream = FileOutputStream(file)
-//            path = file.absolutePath
-//
-//        }
-////        bitmap.compress(Bitmap.CompressFormat.PNG, 85, stream)
-//        stream?.flush()
-//        stream?.close()
-
-
         val pictureFile = getFile()
         coroutineScope.launch(Dispatchers.IO) {
             val resized = BitmapService().resize(bitmap, 1000, 1000)
@@ -185,7 +149,6 @@ class CameraActivity : BaseActivity() {
         return Uri.fromFile(getOutputMediaFile(type))
     }
 
-    /** Create a File for saving an image or video */
     private fun getOutputMediaFile(type: Int): File? {
         // To be safe, you should check that the SDCard is mounted
         // using Environment.getExternalStorageState() before doing this.

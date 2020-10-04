@@ -5,6 +5,7 @@ import android.graphics.BitmapFactory
 import com.scheduler.incodetask.extensions.rotate
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import java.lang.Exception
 
 class BitmapService {
 

@@ -26,8 +26,21 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".activity.CameraActivity" android:screenOrientation="portrait"/>
+        <activity
+            android:name=".activity.CameraActivity"
+            android:screenOrientation="portrait" />
         <activity android:name=".activity.PhotoActivity" />
+
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.provider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/provider_paths" />
+
+        </provider>
     </application>
 
 </manifest>
