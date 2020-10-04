@@ -6,19 +6,25 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.Matrix
 import android.os.Bundle
-import android.os.Handler
 import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.scheduler.incodetask.R
 import com.scheduler.incodetask.adapter.PhotoAdapter
+import com.scheduler.incodetask.extensions.rotate
 import com.scheduler.incodetask.model.Photo
 import com.scheduler.incodetask.model.PhotoWrapper
+import com.scheduler.incodetask.service.BitmapService
 import com.scheduler.incodetask.viewmodel.PhotoViewModel
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.coroutines.*
+import java.io.ByteArrayOutputStream
+
+
+// TODO: 10/2/20 Spinner; Layout do dugmeta za slikanje; Camera preview; Photo size
 
 class MainActivity : AppCompatActivity(), PhotoAdapter.OnPhotoClickedListener, PhotoViewModel.PhotoListener {
 
@@ -32,6 +38,8 @@ class MainActivity : AppCompatActivity(), PhotoAdapter.OnPhotoClickedListener, P
 
     private val coroutineJob = Job()
     private val coroutineScope: CoroutineScope = CoroutineScope(coroutineJob)
+
+    private val bitmapService = BitmapService()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -54,47 +62,89 @@ class MainActivity : AppCompatActivity(), PhotoAdapter.OnPhotoClickedListener, P
         super.onActivityResult(requestCode, resultCode, data)
 
         if (requestCode == 9001 && resultCode == Activity.RESULT_OK) {
-//            val photoBytes = data?.getByteArrayExtra("sdfsdfsdf")
-
             val path = data?.getStringExtra("sdfsdfsdf")
 
-            val b = BitmapFactory.decodeFile(path)
-//            String path = Environment.getExternalStorageDirectory() + fName + ".png"
-//            Bitmap bm = BitmapFactory.decodeFile(path);
-//
-//            val bitmap = BitmapFactory.decodeByteArray(photoBytes, 0, photoBytes!!.size)
+            GlobalScope.launch {
 
-            var scaledBitmap: Bitmap? = null
-            Handler().post {
-
-                val adapter = recyclerView.adapter as PhotoAdapter
-                val list = adapter.photoWrapperList
-                scaledBitmap = if (list.isNotEmpty()) {
-
-                    val width = list[0].bitmap!!.width
-                    val height = list[0].bitmap!!.height
-                    Bitmap.createScaledBitmap(b, width, height, false)
-                } else {
-                    val width = b.width
-                    val height = b.height
-                    val aspectRatio = height / width.toDouble()
-                    val newHeight = 300
-                    val newWidth = (newHeight * aspectRatio).toInt()
-                    Bitmap.createScaledBitmap(b, newWidth, newHeight, false)
+                bitmapService.getBitmapFromPath(path!!) {
+                    val resized = bitmapService.resize(it, 900, 450)
+                    (recyclerView.adapter as PhotoAdapter).addPhoto(0, PhotoWrapper.createUserPhoto(resized!!, path))
                 }
-
-                adapter.addPhoto(0, PhotoWrapper.createUserPhoto(scaledBitmap!!, path!!))
             }
+//            val b = BitmapFactory.decodeFile(path)
+//
+//            GlobalScope.launch {
+//                Log.e("sdfsdfsdf", "Bitmap size: ${b.toBytes().size}")
+////                Log.e("sdfsdfsdf", "Compressed size: ${bitmap.toBytes().size}")
+//
+//                GlobalScope.launch(Dispatchers.Main) {
+//                    Log.e("sdfsdfsdf", "star rotation")
+//                    val bitmap = bitmapService.resize(b, 900, 450)
+//                    val rotated = bitmap?.rotate(-90)
+//
+//                    Log.e("sdfsdfsdf", "fin rotation")
+//
+//                    Log.e("sdfsdfsdf", "fin resize")
+//                    b.recycle()
+//                    (recyclerView.adapter as PhotoAdapter).addPhoto(0, PhotoWrapper.createUserPhoto(rotated?.await()!!, path!!))
+//                }
+//            }
+
+//            Handler().post {
+//
+//                val adapter = recyclerView.adapter as PhotoAdapter
+//                val list = adapter.photoWrapperList
+//                scaledBitmap = if (list.isNotEmpty()) {
+//
+//                    val width = list[0].bitmap!!.width
+//                    val height = list[0].bitmap!!.height
+//                    Bitmap.createScaledBitmap(b, width, height, false)
+//                } else {
+//                    val width = b.width
+//                    val height = b.height
+//                    val aspectRatio = height / width.toDouble()
+//                    val newHeight = 300
+//                    val newWidth = (newHeight * aspectRatio).toInt()
+//                    Bitmap.createScaledBitmap(b, newWidth, newHeight, false)
+//                }
+//
+//            }
         }
+    }
+
+
+    fun getResizedBitmap(bm: Bitmap, newWidth: Int, newHeight: Int): Bitmap {
+        val width = bm.width
+        val height = bm.height
+        val scaleWidth = newWidth.toFloat() / width
+        val scaleHeight = newHeight.toFloat() / height
+        // CREATE A MATRIX FOR THE MANIPULATION
+        val matrix = Matrix()
+        // RESIZE THE BIT MAP
+        matrix.postScale(scaleWidth, scaleHeight)
+
+
+        // "RECREATE" THE NEW BITMAP
+        val resizedBitmap = Bitmap.createBitmap(
+            bm, 0, 0, width, height, matrix, false
+        )
+        bm.recycle()
+        return resizedBitmap
+    }
+
+    private suspend fun compressBitmap(b: Bitmap) = withContext(Dispatchers.IO) {
+        val byteOutputStream = ByteArrayOutputStream()
+        b.compress(Bitmap.CompressFormat.JPEG, 85, byteOutputStream)
+        BitmapFactory.decodeByteArray(byteOutputStream.toByteArray(), 0, byteOutputStream.toByteArray().size)
     }
 
     override fun onResume() {
         super.onResume()
 
-        getPhotos1()
+        getPhotos()
     }
 
-    private fun getPhotos1() {
+    private fun getPhotos() {
         coroutineScope.launch {
             val list = viewModel.getPhotos()
             withContext(Dispatchers.Main) {
@@ -106,7 +156,7 @@ class MainActivity : AppCompatActivity(), PhotoAdapter.OnPhotoClickedListener, P
         }
     }
 
-    private fun getPhotos() {
+//    private fun getPhotos() {
 //        coroutineScope.launch {
 //            withContext(Dispatchers.Main) {
 //                viewModel.getPhotos().observe(this@MainActivity, object : Observer<MutableList<PhotoWrapper>> {
@@ -143,7 +193,7 @@ class MainActivity : AppCompatActivity(), PhotoAdapter.OnPhotoClickedListener, P
 //                })
 //        )
 
-    }
+//    }
 
     private fun addPhotosToAdapter(mutableList: MutableList<Photo>) {
 //        val adapter = recyclerView.adapter as PhotoAdapter
@@ -168,12 +218,12 @@ class MainActivity : AppCompatActivity(), PhotoAdapter.OnPhotoClickedListener, P
 
     private fun checkCameraHardware(context: Context) = context.packageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA)
 
-    override fun onPause() {
+    override fun onStop() {
         if (coroutineJob.isActive) {
             coroutineJob.cancel()
         }
 
-        super.onPause()
+        super.onStop()
     }
 
     override fun onPhotosReady(photoWrapper: PhotoWrapper) {

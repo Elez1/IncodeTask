@@ -8,6 +8,7 @@ import com.scheduler.incodetask.R
 import com.scheduler.incodetask.activity.MainActivity.Companion.PHOTO_KEY
 import com.scheduler.incodetask.model.Photo
 import com.scheduler.incodetask.repository.PhotoRepository
+import com.scheduler.incodetask.service.BitmapService
 import kotlinx.android.synthetic.main.activity_photo.*
 import kotlinx.coroutines.*
 
@@ -26,24 +27,14 @@ class PhotoActivity : AppCompatActivity() {
         titleTextView.text = photo.title
         descriptionTextView.text = photo.comment
 
-        if (photo._id == "userPhoto") {
-            val bitmap = BitmapFactory.decodeFile(photo.picture)
-
-            val width = bitmap.width
-            val height = bitmap.height
-            val aspectRatio = 0.5
-            val newHeight = 300
-            val newWidth = (newHeight * aspectRatio).toInt()
-            val scaledBitmap = Bitmap.createScaledBitmap(bitmap, newWidth, newHeight, false)
-
-            photoImageView.setImageBitmap(scaledBitmap)
-        } else {
-            coroutineScope.launch {
+        coroutineScope.launch {
+            if (photo._id == "userPhoto") {
+                val bitmap = BitmapFactory.decodeFile(photo.picture)
+                val compressed = BitmapService().resize(bitmap, 1000, 1000) ?: throw Exception("Compressed photo can't be null")
+                setBitmap(compressed)
+            } else {
                 val bitmap = PhotoRepository().getBitmapFromUrlAsync(photo.picture).await()
-
-                withContext(Dispatchers.Main) {
-                    photoImageView.setImageBitmap(bitmap)
-                }
+                setBitmap(bitmap)
             }
         }
 
@@ -59,6 +50,11 @@ class PhotoActivity : AppCompatActivity() {
 //            share.putExtra(Intent.EXTRA_TEXT, "I found something cool!")
 //            startActivity(Intent.createChooser(share, "Share Your Design!"))
         }
+    }
+
+
+    private suspend fun setBitmap(bitmap: Bitmap) = withContext(Dispatchers.Main) {
+        photoImageView.setImageBitmap(bitmap)
     }
 
     override fun onPause() {

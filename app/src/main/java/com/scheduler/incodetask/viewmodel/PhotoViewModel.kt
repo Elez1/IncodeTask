@@ -65,9 +65,9 @@ class PhotoViewModel(private val photoListener: PhotoListener) {
         val jobList = ConcurrentLinkedQueue<Job>()
         for (photo in mutableList) {
             jobList.add(GlobalScope.launch {
-                val pw = createPhotoWrapper(photo)
-                pw.photo.replacePictureUrlWithId(pw.id)
-                photoWrapperList.add(pw)
+                val photoWrapper = createPhotoWrapper(photo)
+                photoWrapper.photo.replacePictureUrlWithId(photoWrapper.id)
+                photoWrapperList.add(photoWrapper)
 //                photoListener.onPhotosReady(pw)
             })
         }

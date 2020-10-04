@@ -6,7 +6,9 @@
     <FrameLayout
         android:id="@+id/cameraHolderLayout"
         android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+        android:layout_height="match_parent"
+        android:background="@color/colorAccent"
+        android:gravity="center" />
 
     <Button
         android:id="@+id/captureButton"
@@ -14,6 +16,7 @@
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
         android:layout_centerHorizontal="true"
+        android:layout_marginTop="@dimen/grid_3x"
         android:layout_marginBottom="@dimen/grid_3x"
         android:text="Take photo" />
 </RelativeLayout>

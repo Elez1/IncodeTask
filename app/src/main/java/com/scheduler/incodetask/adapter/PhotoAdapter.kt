@@ -1,29 +1,15 @@
 package com.scheduler.incodetask.adapter
 
-import android.net.Uri
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
-import com.bumptech.glide.Glide
 import com.scheduler.incodetask.R
 import com.scheduler.incodetask.model.PhotoWrapper
 import com.scheduler.incodetask.viewmodel.PhotoViewModel
 import kotlinx.android.synthetic.main.photo_list_item.view.*
 
 class PhotoAdapter(private val photoClickedListener: OnPhotoClickedListener, private val viewModel: PhotoViewModel) : RecyclerView.Adapter<PhotoAdapter.PhotoViewHolder>() {
-
-//    var bitmapList = mutableListOf<Pair<String, Bitmap>>()
-//        set(value) {
-//            field = value
-//            notifyDataSetChanged()
-//        }
-//    var listOfPhotos = mutableListOf<Photo>()
-//        set(value) {
-//            field = value
-//            notifyDataSetChanged()
-//        }
 
     var photoWrapperList = mutableListOf<PhotoWrapper>()
         set(value) {
@@ -41,6 +27,10 @@ class PhotoAdapter(private val photoClickedListener: OnPhotoClickedListener, pri
         val photo = photoWrapperList[position].photo
 
         listItemView.photoTitleTextView.text = photo.title
+        listItemView.photoImageView.layoutParams = listItemView.photoImageView.layoutParams.apply {
+            width = photoWrapperList[position].bitmap.width
+            height = photoWrapperList[position].bitmap.height
+        }
         listItemView.photoImageView.setImageBitmap(photoWrapperList[position].bitmap)
 
         listItemView.setOnClickListener {

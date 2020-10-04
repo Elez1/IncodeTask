@@ -16,7 +16,13 @@ import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import com.scheduler.incodetask.R
 import com.scheduler.incodetask.camera.CameraPreview
+import com.scheduler.incodetask.extensions.toBytes
+import com.scheduler.incodetask.service.BitmapService
 import kotlinx.android.synthetic.main.activity_camera.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
 import java.io.*
 import java.text.SimpleDateFormat
 import java.util.*
@@ -27,6 +33,9 @@ class CameraActivity : AppCompatActivity() {
 
     private var camera: Camera? = null
     private var cameraPreview: CameraPreview? = null
+
+    private val coroutineJob = Job()
+    private val coroutineScope = CoroutineScope(coroutineJob)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -66,11 +75,10 @@ class CameraActivity : AppCompatActivity() {
     private fun startCamera() {
         camera = getCameraInstance()
         Log.e("sdfsdfsdf", "Starting camera")
-        cameraPreview = camera?.let {
-            CameraPreview(this, it)
-        }
+        cameraPreview = CameraPreview(this, camera!!)
 
         cameraPreview.also {
+            Log.e("sdfsdfsdf", "addingView to parent")
             cameraHolderLayout.addView(it)
         }
 
@@ -119,27 +127,34 @@ class CameraActivity : AppCompatActivity() {
 //        stream?.flush()
 //        stream?.close()
 
-        val pictureFile: File = getOutputMediaFile(MEDIA_TYPE_IMAGE) ?: run {
-            Log.d("TAG", ("Error creating media file, check storage permissions"))
-            return
+
+        val pictureFile = getFile()
+        coroutineScope.launch(Dispatchers.IO) {
+            val resized = BitmapService().resize(bitmap, 1000, 1000)
+            val byteArray = resized!!.toBytes()
+            Log.e("sdfsdfsdf", "Created byte array")
+
+            try {
+                val fos = FileOutputStream(pictureFile)
+                fos.write(byteArray)
+                Log.e("sdfsdfsdf", "Finished writing closing stream")
+                fos.close()
+                setResult(Activity.RESULT_OK, Intent().apply { putExtra("sdfsdfsdf", pictureFile.absolutePath) })
+                finish()
+            } catch (e: FileNotFoundException) {
+                Log.d("TAG", "File not found: ${e.message}")
+            } catch (e: IOException) {
+                Log.d("TAG", "Error accessing file: ${e.message}")
+            }
         }
 
-        val stream = ByteArrayOutputStream()
+    }
 
-        bitmap.compress(Bitmap.CompressFormat.JPEG, 50, stream)
-        val byteArray = stream.toByteArray()
-
-        try {
-            val fos = FileOutputStream(pictureFile)
-            fos.write(byteArray)
-            fos.close()
-        } catch (e: FileNotFoundException) {
-            Log.d("TAG", "File not found: ${e.message}")
-        } catch (e: IOException) {
-            Log.d("TAG", "Error accessing file: ${e.message}")
+    private fun getFile(): File {
+        return getOutputMediaFile(MEDIA_TYPE_IMAGE) ?: run {
+            Log.e("sdfsdfsdf", ("Error creating media file, check storage permissions"))
+            throw Exception("Error creating file")
         }
-        setResult(Activity.RESULT_OK, Intent().apply { putExtra("sdfsdfsdf", pictureFile.absolutePath) })
-        finish()
 
     }
 
