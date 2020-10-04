@@ -7,176 +7,127 @@ import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.hardware.Camera
-import android.net.Uri
 import android.os.Build
 import android.os.Bundle
-import android.os.Environment
-import android.provider.MediaStore.Files.FileColumns.MEDIA_TYPE_IMAGE
 import android.util.Log
-import androidx.appcompat.app.AppCompatActivity
 import com.scheduler.incodetask.R
 import com.scheduler.incodetask.camera.CameraPreview
 import com.scheduler.incodetask.extensions.toBytes
 import com.scheduler.incodetask.service.BitmapService
+import com.scheduler.incodetask.service.FileService
 import kotlinx.android.synthetic.main.activity_camera.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
-import java.io.*
-import java.text.SimpleDateFormat
-import java.util.*
 
 class CameraActivity : BaseActivity() {
+    private val TAG = CameraActivity::class.java.simpleName
     private val STORAGE_PERMISSION_REQUEST_CODE = 9003
     private val CAMERA_PERMISSION_REQUEST_CODE = 9002
+    private val coroutineJob = Job()
+    private val coroutineScope = CoroutineScope(coroutineJob)
+
+    private val fileService = FileService()
+    private val bitmapService = BitmapService()
 
     private var camera: Camera? = null
     private var cameraPreview: CameraPreview? = null
 
-    private val coroutineJob = Job()
-    private val coroutineScope = CoroutineScope(coroutineJob)
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_camera)
+
+        captureButton.setOnClickListener {
+            requestPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE, STORAGE_PERMISSION_REQUEST_CODE) {
+                takePhoto()
+            }
+        }
     }
 
-    override fun onResume() {
-        super.onResume()
+    override fun onStart() {
+        super.onStart()
 
-        checkAndRequestPermission()
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            if (checkSelfPermission(Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
-                requestPermissions(arrayOf(Manifest.permission.CAMERA), CAMERA_PERMISSION_REQUEST_CODE)
-            } else {
-                startCamera()
-            }
-        } else {
+        requestPermission(Manifest.permission.CAMERA, CAMERA_PERMISSION_REQUEST_CODE) {
             startCamera()
         }
     }
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
-        if (grantResults.isNotEmpty()) {
-            var allPermissionsGiven = true
-            for (result in grantResults) {
-                if (result == PackageManager.PERMISSION_DENIED) {
-                    allPermissionsGiven = false
-                }
-            }
-
-            if (allPermissionsGiven) {
+        if (requestCode == CAMERA_PERMISSION_REQUEST_CODE) {
+            if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 startCamera()
+            } else {
+                finish()
             }
+        }
+
+        if (requestCode == STORAGE_PERMISSION_REQUEST_CODE) {
+            if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                takePhoto()
+            } else {
+                finish()
+            }
+        }
+    }
+
+    private fun requestPermission(permission: String, requestCode: Int, block: () -> Unit) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            if (checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+                requestPermissions(arrayOf(permission), requestCode)
+                return
+            }
+            block()
+        } else {
+            block()
         }
     }
 
     private fun startCamera() {
+        Log.e("sdfsdfsdf", "starting camera")
         camera = getCameraInstance()
-        Log.e("sdfsdfsdf", "Starting camera")
         cameraPreview = CameraPreview(this, camera!!)
-
         cameraPreview.also {
-            Log.e("sdfsdfsdf", "addingView to parent")
             cameraHolderLayout.addView(it)
         }
-
-        captureButton.setOnClickListener {
-            showSpinner()
-            camera!!.takePicture(null, null, Camera.PictureCallback { photoBytes, _ ->
-
-                val bitmap = BitmapFactory.decodeByteArray(photoBytes, 0, photoBytes.size)
-                savePhotoAndFinish(bitmap)
-            })
-        }
     }
 
-    private fun savePhotoAndFinish(bitmap: Bitmap) {
-        val pictureFile = getFile()
-        coroutineScope.launch(Dispatchers.IO) {
-            val resized = BitmapService().resize(bitmap, 1000, 1000)
-            val byteArray = resized!!.toBytes()
-            Log.e("sdfsdfsdf", "Created byte array")
-
-            try {
-                val fos = FileOutputStream(pictureFile)
-                fos.write(byteArray)
-                Log.e("sdfsdfsdf", "Finished writing closing stream")
-                fos.close()
-                hideSpinner()
-                setResult(Activity.RESULT_OK, Intent().apply { putExtra("sdfsdfsdf", pictureFile.absolutePath) })
-                finish()
-            } catch (e: FileNotFoundException) {
-                Log.d("TAG", "File not found: ${e.message}")
-            } catch (e: IOException) {
-                Log.d("TAG", "Error accessing file: ${e.message}")
-            }
-        }
-
+    private fun takePhoto() {
+        showSpinner()
+        camera!!.takePicture(null, null, Camera.PictureCallback { photoBytes, _ ->
+            val bitmap = BitmapFactory.decodeByteArray(photoBytes, 0, photoBytes.size)
+            savePhotoAndFinish(bitmap)
+        })
     }
 
-    private fun getFile(): File {
-        return getOutputMediaFile(MEDIA_TYPE_IMAGE) ?: run {
-            Log.e("sdfsdfsdf", ("Error creating media file, check storage permissions"))
-            throw Exception("Error creating file")
-        }
+    private fun savePhotoAndFinish(bitmap: Bitmap) = coroutineScope.launch(Dispatchers.IO) {
+        val pictureFile = fileService.getOutputMediaFile().also { Log.d(TAG, it.toString()) } ?: return@launch
+        val resized = bitmapService.resize(bitmap, 1000, 1000)
+        val byteArray = resized!!.toBytes()
+        Log.e("sdfsdfsdf", "Created byte array")
 
+        fileService.saveBitmap(byteArray, pictureFile)
+        hideSpinner()
+        setResult(Activity.RESULT_OK, Intent().apply { putExtra("sdfsdfsdf", pictureFile.absolutePath) })
+        finish()
     }
 
-    private fun checkAndRequestPermission() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-//            if (checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-//                requestPermissions(arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE), STORAGE_PERMISSION_REQUEST_CODE)
-//            }
-
-            if (checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-                requestPermissions(arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE), STORAGE_PERMISSION_REQUEST_CODE)
-            }
-        }
-    }
 
     private fun getCameraInstance(): Camera? {
+        Log.e("sdfsdfsdf", "Getting camera instance")
         return try {
-            Camera.open() // attempt to get a Camera instance
+            Camera.open()
         } catch (e: Exception) {
-            // Camera is not available (in use or does not exist)
             throw e
         }
     }
 
-    private fun getOutputMediaFileUri(type: Int): Uri {
-        return Uri.fromFile(getOutputMediaFile(type))
-    }
-
-    private fun getOutputMediaFile(type: Int): File? {
-        // To be safe, you should check that the SDCard is mounted
-        // using Environment.getExternalStorageState() before doing this.
-
-        val mediaStorageDir = File(
-            Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES),
-            "MyCameraApp"
-        )
-        // This location works best if you want the created images to be shared
-        // between applications and persist after your app has been uninstalled.
-
-        // Create the storage directory if it does not exist
-        mediaStorageDir.apply {
-            if (!exists()) {
-                if (!mkdirs()) {
-                    Log.d("MyCameraApp", "failed to create directory")
-                    return null
-                }
-            }
+    override fun onStop() {
+        camera?.release()
+        if (coroutineJob.isActive) {
+            coroutineJob.cancel()
         }
 
-        // Create a media file name
-        val timeStamp = SimpleDateFormat("yyyyMMdd_HHmmss").format(Date())
-        return when (type) {
-            MEDIA_TYPE_IMAGE -> {
-                File("${mediaStorageDir.path}${File.separator}IMG_$timeStamp.jpg")
-            }
-            else -> null
-        }
+        super.onStop()
     }
 }

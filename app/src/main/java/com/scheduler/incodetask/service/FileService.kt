@@ -34,19 +34,18 @@ class FileService {
 
     private fun getCurrentTimestamp() = SimpleDateFormat("yyyyMMdd_HHmmss").format(Date())
 
-    fun saveBitmap(byteArray: ByteArray, file: File = getOutputMediaFile()!!) {
-        GlobalScope.launch(Dispatchers.IO) {
-            try {
-                val fos = FileOutputStream(getOutputMediaFile())
-                fos.write(byteArray)
-                Log.e("sdfsdfsdf", "Finished writing closing stream")
-                fos.close()
-            } catch (e: FileNotFoundException) {
-                Log.d("TAG", "File not found: ${e.message}")
-            } catch (e: IOException) {
-                Log.d("TAG", "Error accessing file: ${e.message}")
-            }
+    fun saveBitmap(byteArray: ByteArray, file: File = getOutputMediaFile()!!) = GlobalScope.launch(Dispatchers.IO) {
+        try {
+            val fos = FileOutputStream(file)
+            fos.write(byteArray)
+            Log.e("sdfsdfsdf", "Finished writing closing stream")
+            fos.close()
+        } catch (e: FileNotFoundException) {
+            Log.d("TAG", "File not found: ${e.message}")
+        } catch (e: IOException) {
+            Log.d("TAG", "Error accessing file: ${e.message}")
         }
+
     }
 
     fun deleteFile(file: File) {
