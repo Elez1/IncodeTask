@@ -1,4 +1,4 @@
-package com.scheduler.incodetask.activity
+package com.scheduler.incodetask.view.activity
 
 import android.Manifest
 import android.app.Activity

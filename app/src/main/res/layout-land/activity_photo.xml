@@ -4,36 +4,42 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@drawable/drawable_background"
-    tools:context=".view.activity.MainActivity">
+    android:padding="@dimen/grid_3x">
 
     <TextView
         android:id="@+id/titleTextView"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="@dimen/grid_3x"
-        android:layout_marginBottom="@dimen/grid_3x"
+        android:layout_marginTop="@dimen/grid_1x"
+        android:layout_marginBottom="@dimen/grid_2x"
         android:gravity="center"
-        android:text="@string/mainActivity_title"
-        android:textColor="@color/colorAccent"
+        android:textColor="@color/colorWhite"
         android:textSize="24sp"
-        android:textStyle="bold" />
+        tools:text="Photo 1" />
 
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/photosRecyclerView"
-        android:layout_width="match_parent"
+    <ImageView
+        android:id="@+id/photoImageView"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_below="@id/titleTextView"
-        android:layout_marginRight="@dimen/grid_2x"
-        android:layout_marginLeft="@dimen/grid_2x"
-        android:layout_alignParentBottom="true"/>
+        android:layout_centerHorizontal="true" />
+
+    <TextView
+        android:id="@+id/descriptionTextView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/grid_3x"
+        android:textColor="@color/colorBlack"
+        android:layout_below="@id/photoImageView"
+        android:textSize="16sp"
+        tools:text="Description" />
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
-        android:id="@+id/takePhotoButton"
+        android:id="@+id/shareButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentRight="true"
         android:layout_alignParentBottom="true"
-        android:layout_margin="@dimen/grid_3x"
-        android:background="@drawable/drawable_fab"
-        android:src="@drawable/ic_photo_camera" />
+        android:layout_margin="@dimen/grid_2x"
+        android:src="@drawable/ic_share" />
 </RelativeLayout>

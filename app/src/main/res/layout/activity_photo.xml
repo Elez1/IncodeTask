@@ -2,38 +2,44 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:padding="@dimen/grid_3x"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:background="@drawable/drawable_background"
+    android:padding="@dimen/grid_3x">
 
     <TextView
         android:id="@+id/titleTextView"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:textSize="24sp"
-        android:gravity="center"
+        android:layout_marginTop="@dimen/grid_1x"
         android:layout_marginBottom="@dimen/grid_2x"
+        android:gravity="center"
+        android:textColor="@color/colorWhite"
+        android:textSize="24sp"
         tools:text="Photo 1" />
 
     <ImageView
         android:id="@+id/photoImageView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_centerHorizontal="true"
-        android:layout_below="@id/titleTextView"/>
+        android:layout_below="@id/titleTextView"
+        android:layout_centerHorizontal="true" />
 
     <TextView
         android:id="@+id/descriptionTextView"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/grid_4x"
+        android:textColor="@color/colorBlack"
         android:layout_below="@id/photoImageView"
-        tools:text="Description"/>
+        android:textSize="16sp"
+        tools:text="Description" />
 
-    <ImageView
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/shareButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true"
         android:layout_alignParentRight="true"
-        android:src="@drawable/ic_share"
-        android:padding="@dimen/grid_2x"/>
+        android:layout_alignParentBottom="true"
+        android:layout_margin="@dimen/grid_2x"
+        android:src="@drawable/ic_share" />
 </RelativeLayout>

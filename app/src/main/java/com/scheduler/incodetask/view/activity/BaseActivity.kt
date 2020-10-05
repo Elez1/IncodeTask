@@ -1,7 +1,7 @@
-package com.scheduler.incodetask.activity
+package com.scheduler.incodetask.view.activity
 
 import androidx.fragment.app.FragmentActivity
-import com.scheduler.incodetask.fragment.SpinnerFragment
+import com.scheduler.incodetask.view.fragment.SpinnerFragment
 
 open class BaseActivity : FragmentActivity() {
 

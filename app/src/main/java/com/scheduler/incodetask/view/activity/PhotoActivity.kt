@@ -1,4 +1,4 @@
-package com.scheduler.incodetask.activity
+package com.scheduler.incodetask.view.activity
 
 import android.content.Intent
 import android.graphics.Bitmap
@@ -7,7 +7,7 @@ import android.os.Bundle
 import androidx.core.content.FileProvider
 import com.scheduler.incodetask.BuildConfig
 import com.scheduler.incodetask.R
-import com.scheduler.incodetask.activity.MainActivity.Companion.PHOTO_KEY
+import com.scheduler.incodetask.view.activity.MainActivity.Companion.PHOTO_KEY
 import com.scheduler.incodetask.extensions.toBytes
 import com.scheduler.incodetask.model.Photo
 import com.scheduler.incodetask.repository.PhotoRepository

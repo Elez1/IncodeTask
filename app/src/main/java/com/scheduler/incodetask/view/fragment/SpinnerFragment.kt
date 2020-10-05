@@ -1,4 +1,4 @@
-package com.scheduler.incodetask.fragment
+package com.scheduler.incodetask.view.fragment
 
 import android.os.Bundle
 import android.view.LayoutInflater

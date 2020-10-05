@@ -1,4 +1,4 @@
-package com.scheduler.incodetask.activity
+package com.scheduler.incodetask.view.activity
 
 import android.app.Activity
 import android.content.Context
@@ -65,7 +65,7 @@ class MainActivity : BaseActivity(), PhotoAdapter.OnPhotoClickedListener, PhotoH
 
             coroutineScope.launch {
                 bitmapService.getBitmapFromPath(path!!) {
-                    val resized = bitmapService.resize(it, 900, 450)
+                    val resized = bitmapService.resize(it, 600, 300)
                     (recyclerView.adapter as PhotoAdapter).addPhoto(0, PhotoWrapper.createUserPhoto(resized!!, path))
                 }
             }
