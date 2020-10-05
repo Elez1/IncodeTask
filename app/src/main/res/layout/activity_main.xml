@@ -3,6 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:background="@drawable/drawable_background"
     tools:context=".view.activity.MainActivity">
 
@@ -12,9 +13,9 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="@dimen/grid_3x"
         android:layout_marginBottom="@dimen/grid_3x"
-        android:gravity="center"
+        android:layout_marginLeft="@dimen/grid_3x"
         android:text="@string/mainActivity_title"
-        android:textColor="@color/colorAccent"
+        android:textColor="@color/colorWhite"
         android:textSize="24sp"
         android:textStyle="bold" />
 
@@ -35,5 +36,6 @@
         android:layout_alignParentBottom="true"
         android:layout_margin="@dimen/grid_3x"
         android:background="@drawable/drawable_fab"
-        android:src="@drawable/ic_photo_camera" />
+        app:backgroundTint="@color/colorBlue1"
+        android:src="@drawable/ic_camera_white" />
 </RelativeLayout>

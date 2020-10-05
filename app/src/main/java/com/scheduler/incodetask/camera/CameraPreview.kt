@@ -33,13 +33,12 @@ class CameraPreview(context: Context, private val camera: Camera) : SurfaceView(
                 setPreviewDisplay(surfaceHolder)
                 startPreview()
             } catch (e: IOException) {
-                Log.d(TAG, "Error setting camera preview: ${e.message}")
+                Log.e(TAG, "Error setting camera preview: ${e.message}")
             }
         }
     }
 
     override fun surfaceChanged(surfaceHolder: SurfaceHolder, format: Int, width: Int, height: Int) {
-        Log.e("sdfsdfsdf", "surfaceChanged")
         camera.stopPreview()
         val params = camera.parameters
         try {
@@ -47,15 +46,19 @@ class CameraPreview(context: Context, private val camera: Camera) : SurfaceView(
             params.setPreviewSize(mPreviewSize!!.width, mPreviewSize!!.height)
             camera.parameters = params
         } catch (e: IOException) {
-            e.printStackTrace()
-
+            Log.e(TAG, "Error setting preview size: ${e.message}")
         }
         camera.setPreviewDisplay(surfaceHolder)
         camera.startPreview()
     }
 
     override fun surfaceDestroyed(p0: SurfaceHolder) {
-        camera.release()
+        if(camera!=null){
+            camera.stopPreview()
+            camera.setPreviewCallback(null)
+
+            camera.release()
+        }
     }
 
     private fun getOptimalSize(params: Camera.Parameters, w: Int, h: Int): Camera.Size? {
@@ -82,18 +85,14 @@ class CameraPreview(context: Context, private val camera: Camera) : SurfaceView(
                 }
             }
         }
-        Log.e("sdfsdfsdf", "Optimal size: ${optimalSize!!.getString()}")
+
         return optimalSize
     }
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
-        Log.e("sdfsdfsdf", "onMeasure")
         val width = View.resolveSize(suggestedMinimumWidth, widthMeasureSpec)
         val height = View.resolveSize(suggestedMinimumHeight, heightMeasureSpec)
-        Log.e("sdfsdfsdf", " mesurements width: $width, height: $height")
         setMeasuredDimension(width, height)
-        Log.e("sdfsdfsdf", "Parent mesurements width: ${(parent as FrameLayout).width}, height: ${(parent as FrameLayout).height}")
         mPreviewSize = getOptimalSize(camera.parameters, width, height)
-        Log.e("sdfsdfsdf", "Preview size: ${mPreviewSize!!.getString()}")
     }
 }
