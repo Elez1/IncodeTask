@@ -11,6 +11,7 @@
     <uses-feature android:name="android.hardware.camera" />
 
     <application
+        android:name=".application.IncodeApplication"
         android:allowBackup="true"
         android:hardwareAccelerated="true"
         android:icon="@mipmap/ic_launcher"
@@ -19,7 +20,9 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity android:name="com.scheduler.incodetask.view.activity.MainActivity" android:screenOrientation="portrait">
+        <activity
+            android:name="com.scheduler.incodetask.view.activity.MainActivity"
+            android:screenOrientation="portrait">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 

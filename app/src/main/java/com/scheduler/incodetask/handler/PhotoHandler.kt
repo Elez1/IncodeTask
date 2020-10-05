@@ -1,14 +1,17 @@
 package com.scheduler.incodetask.handler
 
+import android.graphics.Bitmap
 import com.scheduler.incodetask.model.Photo
 import com.scheduler.incodetask.model.PhotoWrapper
 import com.scheduler.incodetask.repository.PhotoRepository
 import kotlinx.coroutines.*
 import java.util.concurrent.ConcurrentLinkedQueue
+import javax.inject.Inject
 
-class PhotoHandler(private val photoListener: PhotoListener) {
+class PhotoHandler @Inject constructor(repository: PhotoRepository) {
 
-    private val repository = PhotoRepository()
+    @Inject
+    lateinit var repository: PhotoRepository
 
     var photoWrapperList = mutableListOf<PhotoWrapper>()
 
@@ -55,6 +58,10 @@ class PhotoHandler(private val photoListener: PhotoListener) {
         }
 
         jobList
+    }
+
+    fun getPhotoFromUrl(stringUrl:String): Deferred<Bitmap> {
+        return repository.getBitmapFromUrlAsync(stringUrl)
     }
 
     private suspend fun createPhotoWrapper(photo: Photo): PhotoWrapper {

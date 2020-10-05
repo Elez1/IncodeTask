@@ -11,8 +11,9 @@ import java.io.FileOutputStream
 import java.io.IOException
 import java.text.SimpleDateFormat
 import java.util.*
+import javax.inject.Inject
 
-class FileService {
+class FileService @Inject constructor() {
 
     private val TAG = FileService::class.java.simpleName
     private val DEFAULT_FILE_NAME = "IMG_${getCurrentTimestamp()}.jpg"

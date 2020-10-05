@@ -11,12 +11,14 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.scheduler.incodetask.R
 import com.scheduler.incodetask.adapter.PhotoAdapter
+import com.scheduler.incodetask.application.IncodeApplication
+import com.scheduler.incodetask.handler.PhotoHandler
 import com.scheduler.incodetask.model.Photo
 import com.scheduler.incodetask.model.PhotoWrapper
 import com.scheduler.incodetask.service.BitmapService
-import com.scheduler.incodetask.handler.PhotoHandler
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.coroutines.*
+import javax.inject.Inject
 
 
 class MainActivity : BaseActivity(), PhotoAdapter.OnPhotoClickedListener, PhotoHandler.PhotoListener {
@@ -30,9 +32,12 @@ class MainActivity : BaseActivity(), PhotoAdapter.OnPhotoClickedListener, PhotoH
     private val TAKE_PHOTO_REQUEST_CODE = 9001
 
     private lateinit var recyclerView: RecyclerView
-    private lateinit var handler: PhotoHandler
 
-    private val bitmapService = BitmapService()
+    @Inject
+    lateinit var handler: PhotoHandler
+
+    @Inject
+    lateinit var bitmapService: BitmapService
 
     private val coroutineJob = Job()
     private val coroutineScope: CoroutineScope = CoroutineScope(coroutineJob)
@@ -41,7 +46,7 @@ class MainActivity : BaseActivity(), PhotoAdapter.OnPhotoClickedListener, PhotoH
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        handler = PhotoHandler(this)
+        (application as IncodeApplication).appComponent.injectMainActivity(this)
 
         recyclerView = photosRecyclerView.apply {
             layoutManager = LinearLayoutManager(this@MainActivity)

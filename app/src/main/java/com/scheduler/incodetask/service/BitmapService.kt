@@ -5,8 +5,9 @@ import android.graphics.BitmapFactory
 import com.scheduler.incodetask.extensions.rotate
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import javax.inject.Inject
 
-class BitmapService {
+class BitmapService @Inject constructor() {
 
     suspend fun getBitmapFromPath(path: String, block: (bitmap: Bitmap) -> Unit) = withContext(Dispatchers.IO) {
         val b = BitmapFactory.decodeFile(path)

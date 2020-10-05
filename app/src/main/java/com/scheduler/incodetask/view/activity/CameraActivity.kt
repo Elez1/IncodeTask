@@ -11,6 +11,7 @@ import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import com.scheduler.incodetask.R
+import com.scheduler.incodetask.application.IncodeApplication
 import com.scheduler.incodetask.camera.CameraPreview
 import com.scheduler.incodetask.extensions.toBytes
 import com.scheduler.incodetask.service.BitmapService
@@ -20,6 +21,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 class CameraActivity : BaseActivity() {
     private val TAG = CameraActivity::class.java.simpleName
@@ -28,8 +30,11 @@ class CameraActivity : BaseActivity() {
     private val coroutineJob = Job()
     private val coroutineScope = CoroutineScope(coroutineJob)
 
-    private val fileService = FileService()
-    private val bitmapService = BitmapService()
+    @Inject
+    lateinit var fileService: FileService
+
+    @Inject
+    lateinit var bitmapService: BitmapService
 
     private var camera: Camera? = null
     private var cameraPreview: CameraPreview? = null
@@ -37,6 +42,8 @@ class CameraActivity : BaseActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_camera)
+
+        (application as IncodeApplication).appComponent.injectCameraActivity(this)
 
         captureButton.setOnClickListener {
             requestPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE, STORAGE_PERMISSION_REQUEST_CODE) {

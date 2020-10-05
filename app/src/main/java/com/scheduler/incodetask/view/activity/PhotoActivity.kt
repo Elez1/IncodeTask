@@ -7,15 +7,17 @@ import android.os.Bundle
 import androidx.core.content.FileProvider
 import com.scheduler.incodetask.BuildConfig
 import com.scheduler.incodetask.R
-import com.scheduler.incodetask.view.activity.MainActivity.Companion.PHOTO_KEY
+import com.scheduler.incodetask.application.IncodeApplication
 import com.scheduler.incodetask.extensions.toBytes
+import com.scheduler.incodetask.handler.PhotoHandler
 import com.scheduler.incodetask.model.Photo
-import com.scheduler.incodetask.repository.PhotoRepository
 import com.scheduler.incodetask.service.BitmapService
 import com.scheduler.incodetask.service.FileService
+import com.scheduler.incodetask.view.activity.MainActivity.Companion.PHOTO_KEY
 import kotlinx.android.synthetic.main.activity_photo.*
 import kotlinx.coroutines.*
 import java.io.File
+import javax.inject.Inject
 
 
 class PhotoActivity : BaseActivity() {
@@ -23,12 +25,20 @@ class PhotoActivity : BaseActivity() {
     private val coroutineJob = Job()
     private val coroutineScope = CoroutineScope(coroutineJob)
 
-    private val bitmapService = BitmapService()
-    private val fileService = FileService()
+    @Inject
+    lateinit var fileService: FileService
+
+    @Inject
+    lateinit var bitmapService: BitmapService
+
+    @Inject
+    lateinit var photoHandler: PhotoHandler
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_photo)
+
+        (application as IncodeApplication).appComponent.injectPhotoActivity(this)
 
         val photo = intent.getSerializableExtra(PHOTO_KEY) as Photo
 
@@ -42,8 +52,7 @@ class PhotoActivity : BaseActivity() {
                 val b = BitmapFactory.decodeFile(photo.picture)
                 bitmapService.resize(b, 1000, 1000) ?: throw Exception("Compressed photo can't be null")
             } else {
-                // TODO: 10/5/20 create handler class and move this there
-                PhotoRepository().getBitmapFromUrlAsync(photo.picture).await()
+                photoHandler.getPhotoFromUrl(photo.picture).await()
             }
 
             setBitmap(bitmap!!)

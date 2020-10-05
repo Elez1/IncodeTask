@@ -1,6 +1,7 @@
 package com.scheduler.incodetask.repository
 
 import android.graphics.BitmapFactory
+import com.scheduler.incodetask.retrofit.PhotoService
 import com.scheduler.incodetask.retrofit.RetrofitInstance
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
@@ -8,12 +9,13 @@ import kotlinx.coroutines.async
 import java.io.InputStream
 import java.net.URL
 import java.net.URLConnection
+import javax.inject.Inject
 
-class PhotoRepository {
+class PhotoRepository @Inject constructor(private var photoService: PhotoService) {
 
-    //todo add dagger
-    val retrofit = RetrofitInstance.provideRetrofit()
-    val photoService = RetrofitInstance.providePhotoService(retrofit)
+//    //todo add dagger
+//    val retrofit = RetrofitInstance.provideRetrofit()
+//    val photoService = RetrofitInstance.providePhotoService(retrofit)
 
     suspend fun getPhotos() = photoService.getPhotos()
 
