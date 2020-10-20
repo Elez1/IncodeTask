@@ -7,8 +7,6 @@ import android.util.Log
 import android.view.SurfaceHolder
 import android.view.SurfaceView
 import android.view.View
-import android.widget.FrameLayout
-import com.scheduler.incodetask.extensions.getString
 import java.io.IOException
 
 
@@ -16,7 +14,7 @@ class CameraPreview(context: Context, private val camera: Camera) : SurfaceView(
 
     private val TAG = CameraPreview::class.java.simpleName
 
-    private var mPreviewSize: Camera.Size? = null
+    private var previewSize: Camera.Size? = null
     private val surfaceHolder = holder.apply {
         addCallback(this@CameraPreview)
     }
@@ -42,7 +40,7 @@ class CameraPreview(context: Context, private val camera: Camera) : SurfaceView(
         val params = camera.parameters
         try {
             requestLayout()
-            params.setPreviewSize(mPreviewSize!!.width, mPreviewSize!!.height)
+            params.setPreviewSize(previewSize!!.width, previewSize!!.height)
             camera.parameters = params
         } catch (e: IOException) {
             Log.e(TAG, "Error setting preview size: ${e.message}")
@@ -58,6 +56,13 @@ class CameraPreview(context: Context, private val camera: Camera) : SurfaceView(
 
             camera.release()
         }
+    }
+
+    override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
+        val width = View.resolveSize(suggestedMinimumWidth, widthMeasureSpec)
+        val height = View.resolveSize(suggestedMinimumHeight, heightMeasureSpec)
+        setMeasuredDimension(width, height)
+        previewSize = getOptimalSize(camera.parameters, width, height)
     }
 
     private fun getOptimalSize(params: Camera.Parameters, w: Int, h: Int): Camera.Size? {
@@ -86,12 +91,5 @@ class CameraPreview(context: Context, private val camera: Camera) : SurfaceView(
         }
 
         return optimalSize
-    }
-
-    override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
-        val width = View.resolveSize(suggestedMinimumWidth, widthMeasureSpec)
-        val height = View.resolveSize(suggestedMinimumHeight, heightMeasureSpec)
-        setMeasuredDimension(width, height)
-        mPreviewSize = getOptimalSize(camera.parameters, width, height)
     }
 }
