@@ -8,7 +8,7 @@ import kotlinx.coroutines.*
 import java.util.concurrent.ConcurrentLinkedQueue
 import javax.inject.Inject
 
-class PhotoHandler @Inject constructor(repository: PhotoRepository) {
+class PhotoHandler @Inject constructor() {
 
     @Inject
     lateinit var repository: PhotoRepository

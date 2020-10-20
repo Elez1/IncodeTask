@@ -80,7 +80,7 @@ class CameraActivity : BaseActivity() {
 
     private fun requestPermission(permission: String, requestCode: Int, block: () -> Unit) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            if (checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+            if (checkSelfPermission(permission) != PackageManager.PERMISSION_GRANTED) {
                 requestPermissions(arrayOf(permission), requestCode)
                 return
             }

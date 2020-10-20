@@ -24,9 +24,8 @@ class CameraPreview(context: Context, private val camera: Camera) : SurfaceView(
     override fun surfaceCreated(surfHolder: SurfaceHolder) {
         camera.apply {
             try {
-                surfHolder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
+                surfHolder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS)
                 val params = parameters
-                params.set("orientation", "landscape")
                 params.setRotation(90)
                 setDisplayOrientation(90)
                 parameters = params

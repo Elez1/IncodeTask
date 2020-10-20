@@ -27,7 +27,6 @@ class IncodeApplication : Application() {
         fun getBitmapService(): BitmapService
         fun getPhotoHandler(): PhotoHandler
 
-        //        fun getPhotoService(): PhotoService
         fun injectPhotoActivity(activity: PhotoActivity)
         fun injectMainActivity(activity: MainActivity)
         fun injectCameraActivity(activity: CameraActivity)

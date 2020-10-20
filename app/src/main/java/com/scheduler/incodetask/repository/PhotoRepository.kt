@@ -12,11 +12,6 @@ import java.net.URLConnection
 import javax.inject.Inject
 
 class PhotoRepository @Inject constructor(private var photoService: PhotoService) {
-
-//    //todo add dagger
-//    val retrofit = RetrofitInstance.provideRetrofit()
-//    val photoService = RetrofitInstance.providePhotoService(retrofit)
-
     suspend fun getPhotos() = photoService.getPhotos()
 
     fun getBitmapFromUrlAsync(urlString: String) = GlobalScope.async(Dispatchers.IO) {
